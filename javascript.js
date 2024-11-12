@@ -66,10 +66,13 @@ function Gameboard() {
   const getBoard = () => board;
 
   const dropToken = (row, column, player) => {
-    if (board[row][column].getValue) {
+    if (row >= rows || column >= columns) {
+      // TODO: temp testing, to be deleted, in UI, won't drop outside fo board
+      console.log("Tried to drop token outside of board.");
+    } else if (board[row][column].getValue() === 0) {
       board[row][column].addToken(player);
     } else {
-      // TODO: temp testing, to be deleted.
+      // TODO: temp testing, to be deleted. Add logic to drop again
       console.log("Tried to drop token in occupied cell.");
     }
   };
@@ -103,24 +106,65 @@ function GameController(
   ];
 
   let activePlayer = players[0];
+  let winner = null;
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
   };
   const getActivePlayer = () => activePlayer;
 
+  // This method check if the player with input token is the winner
+  const checkWinner = (board, token) => {
+    const size = board.length;
+
+    // Check rows
+    for (let row = 0; row < size; row++) {
+      if (board[row].every((cell) => cell.getValue() === token)) {
+        return true;
+      }
+    }
+
+    // Check columns
+    for (let col = 0; col < size; col++) {
+      if (board.every((row) => row[col].getValue() === token)) {
+        return true;
+      }
+    }
+
+    // Check main diagonal
+    if (board.every((row, index) => row[index].getValue() === token)) {
+      return true;
+    }
+
+    // Check anti-diagonal
+    if (
+      board.every((row, index) => row[size - 1 - index].getValue() === token)
+    ) {
+      return true;
+    }
+
+    return false; // The player with the token is not winner
+  };
+
   const playRound = (row, column) => {
     // Drop a token for the current player
+    // TODO: temp testing
     console.log(
       `Dropping ${getActivePlayer().name}'s token into column ${column}...`
     );
     board.dropToken(row, column, getActivePlayer().token);
 
-    // TODO: add below logic
-    /*  This is where we would check for a winner and handle that logic,
-          such as a win message. */
+    /*  Check if the active player is the winner. */
+    if (checkWinner(board.getBoard(), getActivePlayer().token)) {
+      winner = getActivePlayer(); // Store the winner
+      // TODO: temp testing, to be adjusted/deleted.
+      console.log(`${winner.name} wins!`);
+      board.printBoard();
+      return; // End the game if there's a winner
+    }
 
     switchPlayerTurn(); // Switch player turn
+    // TODO: temp testing, to be adjusted/deleted.
     board.printBoard(); // print updated board
   };
 
@@ -142,5 +186,9 @@ function GameController(
 
 const game = GameController();
 // TODO: temp testing, to be deleted.
+game.playRound(0, 2);
+game.playRound(0, 1);
+game.playRound(2, 2);
 game.playRound(1, 1);
+game.playRound(2, 0);
 game.playRound(2, 1);
