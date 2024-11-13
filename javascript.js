@@ -1,4 +1,4 @@
-console.log("Check JS file link");
+// console.log("Check JS file link");
 
 // Reference: code structure refer to below link:
 //  https://replit.com/@40percentzinc/ConnectFourConsole#script.js
@@ -9,10 +9,6 @@ console.log("Check JS file link");
  ** value == 1: occupied by Player One's token,
  ** value == 2: occupied by Player Two's token
 
- ** The function includes two methods:
- ** 1. addToken: accept a player's token to change the value of the cell
- ** 2. getValue: retrieve the current value of this cell
-
  ** Note: 
  ** This function does not check whether the token is occupied or not
  ** Whether the action is allowed or not should be included in controller related functions (see below)
@@ -21,10 +17,12 @@ console.log("Check JS file link");
 function Cell() {
   let value = 0;
 
+  // accept a player's token to change the value of the cell
   const addToken = (player) => {
     value = player;
   };
 
+  // retrieve the current value of this cell
   const getValue = () => value;
 
   return {
@@ -33,20 +31,14 @@ function Cell() {
   };
 }
 
-/*
- ** The Gameboard represents the state of the board, each equare holds a Cell.
- ** This function includes following methods:
- ** 1. printBoard: used to print our board to the console, helpful during development, won't need it after we build our UI.
- ** 2. getBoard: get the entire board that our UI will eventually need to render it.()
- ** 3. dropToken (row, column, player): drop player's token at cell[row, column]
- */
-
-function Gameboard() {
+/* The Gameboard represents the state of the board, each equare holds a Cell. */
+function Gameboard(dimension) {
   // Init game board
-  const rows = 3;
-  const columns = 3;
+  const rows = dimension;
+  const columns = dimension;
   const board = [];
 
+  // Initialization
   // Create a 2d array that will represent the state of the game board
   // Row 0 - the top row, column 0 - the left-most column.
   for (let i = 0; i < rows; i++) {
@@ -56,29 +48,21 @@ function Gameboard() {
     }
   }
 
-  const printBoard = () => {
-    const boardWithCellValues = board.map((row) =>
-      row.map((cell) => cell.getValue())
-    ); // iterate each row; for each row, iterate each cell
-    console.log(boardWithCellValues);
-  };
-
+  // get the entire board that our UI will eventually need to render it.()
   const getBoard = () => board;
 
+  // dropToken (row, column, player): drop player's token at cell[row, column]
   const dropToken = (row, column, player) => {
-    if (row >= rows || column >= columns) {
-      // TODO: temp testing, to be deleted, in UI, won't drop outside fo board
-      console.log("Tried to drop token outside of board.");
-    } else if (board[row][column].getValue() === 0) {
+    if (board[row][column].getValue() === 0) {
       board[row][column].addToken(player);
     } else {
-      // TODO: temp testing, to be deleted. Add logic to drop again
+      // Another validation is added inside addEventListener, this line should not run
       console.log("Tried to drop token in occupied cell.");
     }
   };
 
   // Provide an interface for the rest of our application to interact with the board.
-  return { getBoard, dropToken, printBoard };
+  return { getBoard, dropToken };
 }
 
 /*
@@ -90,9 +74,10 @@ function Gameboard() {
  */
 function GameController(
   playerOneName = "PlayerOne",
-  playerTwoName = "PlayerTwo"
+  playerTwoName = "PlayerTwo",
+  dimension
 ) {
-  const board = Gameboard();
+  const board = Gameboard(dimension);
 
   const players = [
     {
@@ -106,12 +91,12 @@ function GameController(
   ];
 
   let activePlayer = players[0];
+  const getActivePlayer = () => activePlayer;
   let winner = null;
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
   };
-  const getActivePlayer = () => activePlayer;
 
   // This method check if the player with input token is the winner
   const checkWinner = (board, token) => {
@@ -146,49 +131,125 @@ function GameController(
     return false; // The player with the token is not winner
   };
 
+  // This method check if all cells are occupied - tie. //
+  const checkTieCase = (board) => {
+    const flattenedBoard = board.flat();
+    const emptyCells = flattenedBoard.filter(
+      (cell) => cell.getValue() === 0
+    ).length;
+    return emptyCells === 0 ? true : false;
+  };
+
+  /* 
+    This method plays one round by dropping a token, 
+    Return true/false; true - game finished, false - game NOT finished.
+  */
   const playRound = (row, column) => {
-    // Drop a token for the current player
-    // TODO: temp testing
-    console.log(
-      `Dropping ${getActivePlayer().name}'s token into column ${column}...`
-    );
-    board.dropToken(row, column, getActivePlayer().token);
+    board.dropToken(row, column, activePlayer.token);
 
     /*  Check if the active player is the winner. */
-    if (checkWinner(board.getBoard(), getActivePlayer().token)) {
-      winner = getActivePlayer(); // Store the winner
-      // TODO: temp testing, to be adjusted/deleted.
-      console.log(`${winner.name} wins!`);
-      board.printBoard();
-      return; // End the game if there's a winner
+    if (checkWinner(board.getBoard(), activePlayer.token)) {
+      winner = activePlayer; // Store the winner
+      document.getElementById(
+        "gameResult"
+      ).textContent = `${winner.name} wins!`;
+      return true; // End the game if there's a winner
+    }
+
+    /*  Check if the game is tie results. */
+    if (checkTieCase(board.getBoard())) {
+      document.getElementById("gameResult").textContent = "It's a tie!";
+      return true;
     }
 
     switchPlayerTurn(); // Switch player turn
-    // TODO: temp testing, to be adjusted/deleted.
-    board.printBoard(); // print updated board
+    return false;
   };
 
-  // Initial play game message
-  // TODO: temp testing, to be deleted.
-  console.log("Init game starts.");
-  board.printBoard();
-  console.log(`${getActivePlayer().name}'s turn.`);
-  console.log("Init game finished.");
-
-  // TODO: check below comments
-  // For the console version, we will only use playRound, but we will need
-  // getActivePlayer for the UI version, so I'm revealing it now
   return {
     playRound,
     getActivePlayer,
   };
 }
 
-const game = GameController();
-// TODO: temp testing, to be deleted.
-game.playRound(0, 2);
-game.playRound(0, 1);
-game.playRound(2, 2);
-game.playRound(1, 1);
-game.playRound(2, 0);
-game.playRound(2, 1);
+function initialize(dimension) {
+  // Reset game board
+  const oldGameBoard = document.getElementById("game-board");
+  if (oldGameBoard) {
+    oldGameBoard.remove();
+  }
+  // Reset results
+  const oldResult = document.getElementById("gameResult");
+  oldResult.textContent = "No results yet.";
+
+  // Initialize the game board
+  const gameContainer = document.getElementById("game-container");
+  const gameBoard = document.createElement("div");
+  gameBoard.id = "game-board";
+  gameBoard.style.gridTemplateColumns = `repeat(${dimension}, 100px)`;
+  gameBoard.style.gridTemplateRows = `repeat(${dimension}, 100px)`;
+  for (let row = 0; row < dimension; row++) {
+    for (let col = 0; col < dimension; col++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.dataset.row = row;
+      cell.dataset.col = col;
+      gameBoard.appendChild(cell);
+    }
+  }
+  gameContainer.appendChild(gameBoard);
+}
+
+function playGame(playerOneName, playerTwoName, dimension) {
+  // console.log("Init game starts."); // for testing purpose
+
+  let isGameFinished = false;
+  const gameController = GameController(
+    playerOneName,
+    playerTwoName,
+    dimension
+  );
+
+  // Create a 2d array that will represent the state of the game board
+  // Row 0 - the top row, column 0 - the left-most column.
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach((cell) => {
+    cell.addEventListener("click", () => {
+      if (isGameFinished) {
+        alert("Game finished! Please start a new game!");
+        return;
+      }
+      if (
+        !cell.classList.contains("PlayerOne") &&
+        !cell.classList.contains("PlayerTwo")
+      ) {
+        // "PlayerOne" and "PlayerTwo" are also used for styling
+        cell.classList.add(
+          gameController.getActivePlayer().token === 1
+            ? "PlayerOne"
+            : "PlayerTwo"
+        );
+
+        cell.textContent =
+          gameController.getActivePlayer().token === 1 ? "X" : "O";
+
+        isGameFinished = gameController.playRound(
+          cell.dataset.row,
+          cell.dataset.col
+        );
+      } else {
+        console.log("Cell already occupied!");
+      }
+    });
+  });
+}
+
+const startBtn = document.getElementById("start");
+// TODO: Future improvement: let user to input boardgame dimensions
+startBtn.addEventListener("click", () => {
+  const player1NameInput = document.getElementById("playerOneName").value;
+  const player2NameInput = document.getElementById("playerTwoName").value;
+
+  initialize(3);
+  playGame(player1NameInput, player2NameInput, 3);
+});

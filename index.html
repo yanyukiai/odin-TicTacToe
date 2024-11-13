@@ -8,6 +8,35 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Title</h1>
+    <h1>Tic Tac Toe Game</h1>
+    <div id="game-container">
+      <form id="gameForm">
+        <!-- Player 1 Name Field -->
+        <div class="form-group">
+          <label for="playerOneName">Player 1's Name:</label>
+          <input
+            type="text"
+            id="playerOneName"
+            name="playerOneName"
+            value="Player 1"
+          />
+        </div>
+        <!-- Player 2 Name Field -->
+        <div class="form-group">
+          <label for="playerTwoName">Player 2's Name:</label>
+          <input
+            type="text"
+            id="playerTwoName"
+            name="playerTwoName"
+            value="Player 2"
+          />
+        </div>
+        <div class="form-group">
+          <label for="gameResultTitle">Game Results</label>
+          <div id="gameResult">No results yet.</div>
+        </div>
+      </form>
+      <button id="start">Start the game!</button>
+    </div>
   </body>
 </html>
